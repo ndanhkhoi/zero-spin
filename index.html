@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vòng Quay May Mắn - PWA</title>
+  <!-- Meta cho PWA -->
+  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="manifest.json">
+  <!-- Bootstrap 5 CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* CSS cho vùng vòng quay: viền trắng và shadow bên ngoài */
+    #wheel-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+      border-radius: 50%;
+      border: 5px solid white;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
+    }
+    /* Con trỏ chỉ vị trí (đặt bên ngoài vòng quay ở phía trên) */
+    #pointer {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 40px;
+      color: #d00;
+    }
+    /* Nhãn tên hiển thị trên vòng quay: căn giữa và xoay lại xíu (offset 5°) */
+    .wheel-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform-origin: center;
+      font-weight: bold;
+      color: #fff;
+      white-space: nowrap;
+      text-align: center;
+    }
+    /* Highlight nhãn của người chiến thắng */
+    .winner {
+      border: 2px solid yellow;
+      box-shadow: 0 0 10px 5px rgba(255,255,0,0.7);
+      border-radius: 5px;
+      padding: 2px 4px;
+    }
+    /* CSS cho nút, canh giữa và thêm khoảng cách */
+    .btn-custom {
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-4">
+    <!-- Header -->
+    <header class="text-center mb-4">
+      <h1>Vòng Quay May Mắn</h1>
+    </header>
+    
+    <!-- Nút mở Modal nhập thông tin người chơi -->
+    <div class="text-center mb-3">
+      <button id="openModalBtn" class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#playerModal">
+        <i class="fa-solid fa-user"></i> Nhập danh sách người chơi
+      </button>
+    </div>
+    
+    <!-- Modal nhập thông tin người chơi -->
+    <!-- Modal được cấu hình với backdrop static và keyboard false để không thể tắt khi chưa đủ thông tin -->
+    <div class="modal fade" id="playerModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="playerModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="playerModalLabel">Nhập thông tin người chơi</h5>
+            <!-- Không có nút đóng modal -->
+          </div>
+          <div class="modal-body">
+            <!-- Nhập số lượng người chơi -->
+            <div class="mb-3">
+              <label for="playerCount" class="form-label">Số lượng người chơi:</label>
+              <input type="number" class="form-control" id="playerCount" min="1" placeholder="Nhập số lượng người chơi">
+            </div>
+            <button class="btn btn-secondary mb-3" id="createForm">
+              <i class="fa-solid fa-plus"></i> Tạo form
+            </button>
+            <!-- Dynamic form chứa các ô nhập tên -->
+            <div id="playerForm"></div>
+          </div>
+          <div class="modal-footer">
+            <!-- Thông báo lỗi nhập liệu -->
+            <div id="modalStatus" class="me-auto text-danger"></div>
+            <!-- Nút xác nhận: kiểm tra dữ liệu trước khi tắt modal -->
+            <button type="button" class="btn btn-success" id="confirmPlayers">
+              <i class="fa-solid fa-check"></i> Xác nhận
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Vùng hiển thị vòng quay -->
+    <div class="position-relative my-4" style="width:300px; height:300px; margin: 0 auto;">
+      <div id="wheel-container"></div>
+      <div id="pointer"><i class="fa-solid fa-caret-down"></i></div>
+    </div>
+    
+    <!-- Các nút Quay và Reset, canh giữa -->
+    <div class="text-center">
+      <button class="btn btn-danger btn-custom" id="spinBtn">
+        <i class="fa-solid fa-play"></i> Quay
+      </button>
+      <button class="btn btn-secondary btn-custom" id="resetBtn">
+        <i class="fa-solid fa-rotate-left"></i> Reset
+      </button>
+    </div>
+  </div>
+  
+  <!-- Bootstrap 5 JS Bundle (bao gồm Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Mảng lưu danh sách người chơi
+    let players = [];
+    // Góc quay hiện tại (tích lũy từ các lần quay)
+    let currentAngle = 0;
+    // Thời gian quay (ms)
+    const spinDuration = 4000;
+    
+    // Lấy các phần tử DOM cần thiết
+    const playerCountInput = document.getElementById('playerCount');
+    const createFormBtn = document.getElementById('createForm');
+    const playerFormDiv = document.getElementById('playerForm');
+    const confirmPlayersBtn = document.getElementById('confirmPlayers');
+    const modalStatusDiv = document.getElementById('modalStatus');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const wheelContainer = document.getElementById('wheel-container');
+    const spinBtn = document.getElementById('spinBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const playerModalEl = document.getElementById('playerModal');
+    const modalInstance = new bootstrap.Modal(playerModalEl);
+    
+    // Hàm disable tất cả các nút trên trang
+    function disableAllButtons() {
+      document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+    }
+    
+    // Hàm enable lại tất cả các nút trên trang
+    function enableAllButtons() {
+      document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+    }
+    
+    // Hàm tạo form nhập tên người chơi dựa trên số lượng được nhập
+    function buildPlayerForm(count, prefill = []) {
+      playerFormDiv.innerHTML = '';
+      playerCountInput.value = count;
+      for (let i = 0; i < count; i++) {
+        const div = document.createElement('div');
+        div.className = 'mb-2';
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.textContent = 'Tên người chơi ' + (i + 1) + ':';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control';
+        input.placeholder = 'Nhập tên người chơi ' + (i + 1);
+        if (prefill[i]) {
+          input.value = prefill[i];
+        }
+        div.appendChild(label);
+        div.appendChild(input);
+        playerFormDiv.appendChild(div);
+      }
+      modalStatusDiv.textContent = '';
+    }
+    
+    // Sự kiện khi nhấn nút "Tạo form"
+    createFormBtn.addEventListener('click', function() {
+      const count = parseInt(playerCountInput.value);
+      if (isNaN(count) || count < 1) {
+        modalStatusDiv.textContent = 'Vui lòng nhập số lượng người chơi hợp lệ!';
+        return;
+      }
+      buildPlayerForm(count);
+    });
+    
+    // Xác nhận danh sách người chơi từ form trong modal
+    confirmPlayersBtn.addEventListener('click', function() {
+      players = [];
+      const inputs = playerFormDiv.getElementsByTagName('input');
+      let allEntered = true;
+      for (let input of inputs) {
+        if (input.value.trim() === '') {
+          modalStatusDiv.textContent = 'Vui lòng nhập đầy đủ tên của tất cả người chơi!';
+          allEntered = false;
+          break;
+        }
+        players.push(input.value.trim());
+      }
+      if (!allEntered) return;
+      modalStatusDiv.textContent = 'Danh sách người chơi đã được xác nhận!';
+      createWheel();
+      modalInstance.hide();
+    });
+    
+    // Hàm tạo vòng quay với conic-gradient và nhãn căn giữa, xoay lại xíu (offset 5°)
+    function createWheel() {
+      wheelContainer.innerHTML = '';
+      const numPlayers = players.length;
+      const segmentAngle = 360 / numPlayers;
+      // Tạo chuỗi gradient với màu sắc khác nhau
+      let gradientStr = 'conic-gradient(';
+      for (let i = 0; i < numPlayers; i++) {
+        let startAngle = i * segmentAngle;
+        let endAngle = (i + 1) * segmentAngle;
+        let color = 'hsl(' + (i * (360 / numPlayers)) + ', 70%, 60%)';
+        gradientStr += color + ' ' + startAngle + 'deg, ' + color + ' ' + endAngle + 'deg';
+        if (i < numPlayers - 1) gradientStr += ', ';
+      }
+      gradientStr += ')';
+      wheelContainer.style.background = gradientStr;
+      
+      // Tạo nhãn cho từng phân đoạn: xoay theo midAngle, dịch chuyển lên labelRadius, sau đó xoay lại xíu (offset +5°)
+      const labelRadius = 80;
+      for (let i = 0; i < numPlayers; i++) {
+        const label = document.createElement('div');
+        label.className = 'wheel-label';
+        label.textContent = players[i];
+        const midAngle = (i + 0.5) * segmentAngle;
+        label.style.transform = 'rotate(' + midAngle + 'deg) translate(0, -' + labelRadius + 'px) rotate(' + (-midAngle + 5) + 'deg)';
+        wheelContainer.appendChild(label);
+      }
+    }
+    
+    // Xử lý sự kiện quay vòng khi nhấn nút "Quay"
+    spinBtn.addEventListener('click', function() {
+      if (players.length === 0) return;
+      disableAllButtons();
+      const randomAngle = Math.random() * 360;
+      const extraSpins = 360 * 5;
+      const spinDegrees = extraSpins + randomAngle;
+      currentAngle += spinDegrees;
+      wheelContainer.style.transform = 'rotate(' + currentAngle + 'deg)';
+      
+      // Tính chỉ số người thắng và highlight nhãn tương ứng
+      const normalizedAngle = currentAngle % 360;
+      const segmentAngle = 360 / players.length;
+      const winningIndex = Math.floor((360 - normalizedAngle) / segmentAngle) % players.length;
+      
+      setTimeout(function() {
+        const labels = wheelContainer.querySelectorAll('.wheel-label');
+        labels.forEach(label => label.classList.remove('winner'));
+        if (labels[winningIndex]) {
+          labels[winningIndex].classList.add('winner');
+        }
+        enableAllButtons();
+      }, spinDuration);
+    });
+    
+    // Nút Reset: làm mới toàn bộ giao diện và dữ liệu
+    resetBtn.addEventListener('click', function() {
+      players = [];
+      currentAngle = 0;
+      playerCountInput.value = '';
+      playerFormDiv.innerHTML = '';
+      wheelContainer.innerHTML = '';
+      wheelContainer.style.transform = 'rotate(0deg)';
+    });
+    
+    // Khởi tạo tự động nếu URL có param ?players=...
+    window.addEventListener('load', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('players')) {
+        const paramPlayers = urlParams.get('players');
+        const playerNames = paramPlayers.split(',').map(name => name.trim()).filter(name => name);
+        if (playerNames.length > 0) {
+          players = playerNames;
+          buildPlayerForm(playerNames.length, playerNames);
+          createWheel();
+        }
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker registered', reg))
+          .catch(err => console.error('Service Worker registration failed', err));
+      }
+    });
+  </script>
+</body>
+</html>
