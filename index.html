@@ -179,14 +179,18 @@
                 </button>
               </div>
             </div>
-            <div class="modal-footer">
-              <div id="modalStatus" class="me-auto text-danger"></div>
-              <button type="button" class="btn btn-success" id="confirmPlayers">
-                <i class="fa-solid fa-check"></i>
-              </button>
-              <button type="button" class="btn btn-info" id="shareLinkBtn">
-                <i class="fa-solid fa-share"></i> 
-              </button>
+            <div class="modal-footer flex-column">
+            <!-- Notification message displayed separately -->
+              <div id="modalStatus" class="mb-2 text-danger"></div>
+              <!-- Container for confirm and share buttons -->
+              <div>
+                <button type="button" class="btn btn-success" id="confirmPlayers">
+                  <i class="fa-solid fa-check"></i>
+                </button>
+                <button type="button" class="btn btn-info" id="shareLinkBtn">
+                  <i class="fa-solid fa-share"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
