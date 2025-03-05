@@ -65,7 +65,7 @@ Zero Spin is a web application that lets you spin a wheel to randomly select a w
 
 1. **Clone the Repository**  
    ```bash
-   git clone https://github.com/yourusername/zero-spin.git
+   git clone https://github.com/ndanhkhoi/zero-spin.git
    ```
 2. **Open `index.html`**  
    You can open the file directly in a web browser or deploy it on a web server.
