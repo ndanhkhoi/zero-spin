@@ -173,6 +173,8 @@
             </div>
             <div class="modal-body">
               <div id="playerForm"></div>
+              <!-- Notification area for player modal -->
+              <div id="modalStatus"></div>
               <div class="text-end">
                 <button type="button" class="btn btn-secondary" id="addPlayerBtn" title="Add player">
                   <i class="fa-solid fa-plus"></i>
@@ -180,8 +182,6 @@
               </div>
             </div>
             <div class="modal-footer flex-column">
-            <!-- Notification message displayed separately -->
-              <div id="modalStatus" class="mb-2 text-danger"></div>
               <!-- Container for confirm and share buttons -->
               <div>
                 <button type="button" class="btn btn-success" id="confirmPlayers">
@@ -283,6 +283,17 @@
     document.querySelectorAll('.player-input').forEach(input => {
       input.placeholder = translations.playerInputPlaceholder[currentLanguage];
     });
+  }
+
+  // Function to show alert message in modal using Bootstrap alert classes
+  // message: the alert text; type: 'success' or 'danger'
+  function showModalStatus(message, type) {
+    if (!message) {
+      // Clear the alert if message is empty
+      document.getElementById('modalStatus').innerHTML = "";
+      return;
+    }
+    document.getElementById('modalStatus').innerHTML = '<div class="alert alert-' + type + '" role="alert">' + message + '</div>';
   }
 
   // Language select event
@@ -391,7 +402,7 @@
     let allEntered = true;
     inputs.forEach(input => {
       if (input.value.trim() === '') {
-        modalStatusDiv.textContent = translations.pleaseEnterAllPlayerNames[currentLanguage];
+        showModalStatus(translations.pleaseEnterAllPlayerNames[currentLanguage], 'danger');
         allEntered = false;
       }
     });
@@ -401,7 +412,7 @@
     players.forEach(name => {
       if (winCounts[name] === undefined) winCounts[name] = 0;
     });
-    modalStatusDiv.textContent = '';
+    showModalStatus("", "");
     createWheel();
     spinBtn.disabled = false;
     statsBtn.disabled = false;
@@ -410,10 +421,8 @@
 
   // Share Link button event
   shareLinkBtn.addEventListener('click', () => {
-    // Reset class to text-danger to prepare for displaying error message (if any)
-    modalStatusDiv.classList.remove('text-success');
-    modalStatusDiv.classList.add('text-danger');
-    modalStatusDiv.textContent = '';
+    // Clear any previous alert message
+    showModalStatus("", "danger");
 
     const inputs = document.querySelectorAll('.player-input');
     let allFilled = true;
@@ -426,7 +435,7 @@
       }
     });
     if (!allFilled) {
-      modalStatusDiv.textContent = translations.pleaseEnterAllPlayerNames[currentLanguage];
+      showModalStatus(translations.pleaseEnterAllPlayerNames[currentLanguage], 'danger');
       return;
     }
     // Encode each name and join them with a comma
@@ -434,14 +443,10 @@
     const shareUrl = `${window.location.origin}${window.location.pathname}?players=${encodedNames}`;
     navigator.clipboard.writeText(shareUrl)
             .then(() => {
-              modalStatusDiv.classList.remove('text-danger');
-              modalStatusDiv.classList.add('text-success');
-              modalStatusDiv.textContent = translations.linkCopied[currentLanguage];
+              showModalStatus(translations.linkCopied[currentLanguage], 'success');
             })
             .catch(err => {
-              modalStatusDiv.classList.remove('text-success');
-              modalStatusDiv.classList.add('text-danger');
-              modalStatusDiv.textContent = translations.errorCopyingLink[currentLanguage] + err;
+              showModalStatus(translations.errorCopyingLink[currentLanguage] + err, 'danger');
             });
   });
 
