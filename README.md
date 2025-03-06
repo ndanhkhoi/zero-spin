@@ -13,8 +13,7 @@ Zero Spin is a modern web application that lets you spin a wheel to randomly sel
 - **Multi-Language Support**
    - Supports at least two languages (Vietnamese and English).
    - The language selection dropdown is synced with localStorage and the URL parameter (`lang`), so the preferred language persists across sessions.
-   - During a wheel spin, the language dropdown is temporarily disabled to prevent mid-spin language changes.
-   - All status messages (including the “spinning” message) are displayed in the selected language with context-appropriate emojis.
+   - All status messages are displayed in the selected language with context-appropriate emojis.
 
 - **Random Wheel Spin**
    - Uses the Web Crypto API to generate a random angle for each spin.
