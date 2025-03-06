@@ -94,12 +94,10 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    /* Highlight winner's label: use background highlight and text shadow */
+    /* Highlight winner's label: highlight the text using text-shadow only */
     .winner {
-      background-color: yellow;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-      border-radius: 5px;
-      padding: 2px 4px;
+      /* Highlight chữ bằng text-shadow, không dùng background để không làm chìm nội dung */
+      text-shadow: 0 0 5px yellow, 0 0 10px yellow;
     }
     /* Display result section */
     #winningDisplay {
@@ -160,7 +158,7 @@
         <div class="text-center mb-3">
           <label for="languageSelect" data-key="selectLanguageLabel">Chọn ngôn ngữ:</label>
           <select id="languageSelect" class="form-select d-inline-block w-auto ms-2">
-            <option value="vi" selected>Tiếng Việt</option>
+            <option value="vi">Tiếng Việt</option>
             <option value="en">English</option>
           </select>
         </div>
@@ -184,7 +182,7 @@
               </div>
               <div class="modal-body">
                 <div id="playerForm"></div>
-                <!-- No in-modal notifications; add player button aligns with delete buttons -->
+                <!-- Add player button aligns with delete buttons -->
                 <div class="text-end">
                   <button type="button" class="btn btn-secondary btn-custom" id="addPlayerBtn" title="Add player">
                     <i class="fa-solid fa-plus"></i>
@@ -277,7 +275,7 @@
       share: { vi: "Chia sẻ", en: "Share" }
     };
 
-    // Function to update UI texts according to the selected language with fade effect
+    // Update UI texts with fade effect
     function updateLanguage() {
       document.querySelectorAll('[data-key]').forEach(el => {
         el.style.opacity = 0;
@@ -289,20 +287,20 @@
           el.style.opacity = 1;
         }, 150);
       });
-      // Update placeholder for all player input fields
+      // Update placeholder for all player inputs
       document.querySelectorAll('.player-input').forEach(input => {
         input.placeholder = translations.playerInputPlaceholder[currentLanguage];
       });
     }
 
-    // Custom alert function using Bootstrap alerts
+    // Custom alert using Bootstrap alerts
     function showAlert(message, type) {
       const alertContainer = document.getElementById('alertContainer');
       if (!alertContainer) return;
       const alertDiv = document.createElement('div');
       alertDiv.className = 'alert alert-' + type + ' alert-dismissible fade show';
       alertDiv.setAttribute('role', 'alert');
-      alertDiv.innerHTML = message + 
+      alertDiv.innerHTML = message +
         '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
       alertContainer.appendChild(alertDiv);
       // Auto-dismiss after 3 seconds
@@ -313,51 +311,67 @@
       }, 3000);
     }
 
-    // Language select event – store chosen language in localStorage
-    document.getElementById('languageSelect').addEventListener('change', (e) => {
-      currentLanguage = e.target.value;
-      localStorage.setItem('language', currentLanguage);
-      updateLanguage();
-    });
-
-    // On page load, check localStorage for saved language and update player form and wheel if params exist
-    window.addEventListener('load', () => {
-      const storedLang = localStorage.getItem('language');
-      if (storedLang) {
-        currentLanguage = storedLang;
-        document.getElementById('languageSelect').value = currentLanguage;
-      }
+    // Load language from URL params (if exists) or from localStorage
+    function loadLanguage() {
       const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('lang')) {
+        currentLanguage = urlParams.get('lang');
+        localStorage.setItem('language', currentLanguage);
+      } else if (localStorage.getItem('language')) {
+        currentLanguage = localStorage.getItem('language');
+      }
+      document.getElementById('languageSelect').value = currentLanguage;
+    }
+
+    // Load players from URL params (if exists) or from localStorage and initialize the form and wheel
+    function loadPlayers() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let loadedPlayers = [];
       if (urlParams.has('players')) {
         const paramPlayers = urlParams.get('players');
-        const playerNames = paramPlayers.split(',').map(name => name.trim()).filter(name => name);
-        if (playerNames.length > 0) {
-          players = playerNames;
-          document.getElementById('playerForm').innerHTML = '';
-          playerNames.forEach(name => document.getElementById('playerForm').appendChild(createPlayerRow(name)));
-          updateDeleteButtons();
-          checkPlayerInputs();
-          createWheel();
-        } else {
-          buildDefaultPlayerForm();
-          document.getElementById('wheel-container').innerHTML = '';
-          spinBtn.disabled = true;
-          statsBtn.disabled = true;
+        loadedPlayers = paramPlayers.split(',').map(name => name.trim()).filter(name => name);
+        if (loadedPlayers.length > 0) {
+          localStorage.setItem('players', JSON.stringify(loadedPlayers));
         }
+      } else if (localStorage.getItem('players')) {
+        loadedPlayers = JSON.parse(localStorage.getItem('players'));
+      }
+      if (loadedPlayers.length > 0) {
+        players = loadedPlayers;
+        document.getElementById('playerForm').innerHTML = '';
+        players.forEach(name => document.getElementById('playerForm').appendChild(createPlayerRow(name)));
+        updateDeleteButtons();
+        checkPlayerInputs();
+        createWheel();
       } else {
         buildDefaultPlayerForm();
         document.getElementById('wheel-container').innerHTML = '';
         spinBtn.disabled = true;
         statsBtn.disabled = true;
       }
+    }
+
+    // On page load: load language and players, register service worker, update texts, fade in card
+    window.addEventListener('load', () => {
+      loadLanguage();
+      loadPlayers();
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js')
           .then(reg => console.log('Service Worker registered', reg))
           .catch(err => console.error('Service Worker registration failed', err));
       }
-      // Initialize language texts and fade in the card
       updateLanguage();
       document.getElementById('appCard').style.opacity = 1;
+    });
+
+    // Update language on select change and update URL param "lang"
+    document.getElementById('languageSelect').addEventListener('change', (e) => {
+      currentLanguage = e.target.value;
+      localStorage.setItem('language', currentLanguage);
+      const url = new URL(window.location.href);
+      url.searchParams.set('lang', currentLanguage);
+      window.history.replaceState(null, '', url.toString());
+      updateLanguage();
     });
 
     // Get DOM elements
@@ -376,17 +390,17 @@
     const modalInstance = new bootstrap.Modal(playerModalEl);
     const statsModalInstance = new bootstrap.Modal(statsModalEl);
 
-    // Function to disable all buttons
+    // Disable all buttons
     function disableAllButtons() {
       document.querySelectorAll('button').forEach(btn => btn.disabled = true);
     }
-    // Function to enable all buttons and update delete buttons
+    // Enable all buttons and update delete buttons
     function enableAllButtons() {
       document.querySelectorAll('button').forEach(btn => btn.disabled = false);
       updateDeleteButtons();
     }
 
-    // Update delete buttons: disable if there are only 2 fields
+    // Update delete buttons: disable if only 2 fields remain
     function updateDeleteButtons() {
       const rows = document.querySelectorAll('.player-row');
       rows.forEach(row => {
@@ -395,7 +409,7 @@
       });
     }
 
-    // Create a row with an input and delete button for a player
+    // Create a row with an input and a delete button for a player
     function createPlayerRow(value = '') {
       const div = document.createElement('div');
       div.className = 'player-row';
@@ -404,7 +418,6 @@
       input.className = 'form-control player-input';
       input.placeholder = translations.playerInputPlaceholder[currentLanguage];
       input.value = value;
-      // Check input to enable/disable spin & statistics buttons if any field is empty
       input.addEventListener('input', checkPlayerInputs);
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
@@ -420,7 +433,7 @@
       return div;
     }
 
-    // Check if all input fields are filled to enable spin, statistics, and share buttons
+    // Check if all player inputs are filled to enable spin, stats, and share buttons
     function checkPlayerInputs() {
       const inputs = document.querySelectorAll('.player-input');
       let allFilled = true;
@@ -444,7 +457,7 @@
       checkPlayerInputs();
     }
 
-    // 'Add player' button event: add a new field and focus on it
+    // "Add player" button event: add a new field and focus on it
     addPlayerBtn.addEventListener('click', () => {
       const newRow = createPlayerRow();
       playerFormDiv.appendChild(newRow);
@@ -453,7 +466,7 @@
       checkPlayerInputs();
     });
 
-    // Confirm button event: validate inputs, update URL params, and create the wheel
+    // Confirm button event: validate inputs, update URL/localStorage, then create the wheel
     confirmPlayersBtn.addEventListener('click', () => {
       players = [];
       const inputs = document.querySelectorAll('.player-input');
@@ -466,14 +479,15 @@
       });
       if (!allEntered) return;
       inputs.forEach(input => players.push(input.value.trim()));
-      // Initialize win counts for new players if not set
+      // Initialize win counts if not already set
       players.forEach(name => {
         if (winCounts[name] === undefined) winCounts[name] = 0;
       });
-      // Update URL params using URLSearchParams
+      // Update URL params and localStorage for players
       const url = new URL(window.location.href);
       url.searchParams.set('players', players.join(','));
       window.history.replaceState(null, '', url.toString());
+      localStorage.setItem('players', JSON.stringify(players));
       
       createWheel();
       spinBtn.disabled = false;
@@ -482,7 +496,7 @@
       modalInstance.hide();
     });
 
-    // Share button event: copy current URL to clipboard
+    // Share button event: copy current URL (with params) to clipboard
     shareLinkBtn.addEventListener('click', () => {
       if (players.length === 0) {
         showAlert(translations.pleaseEnterAllPlayerNames[currentLanguage], 'danger');
@@ -522,20 +536,19 @@
         label.className = 'wheel-label';
         label.textContent = players[i];
         const midAngle = (i + 0.5) * segmentAngle;
-        // Position the label correctly on the wheel
         label.style.transform = `rotate(${midAngle}deg) translate(0, -${labelRadius}px) rotate(90deg)`;
         wheelContainer.appendChild(label);
       }
     }
 
-    // Use Web Crypto API to generate a uniformly random number (angle)
+    // Use Web Crypto API to generate a random angle
     function getRandomAngle() {
       const randomUint32 = new Uint32Array(1);
       window.crypto.getRandomValues(randomUint32);
       return (randomUint32[0] / 0xFFFFFFFF) * 360;
     }
 
-    // Spin button event: disable buttons, spin the wheel, and update the winner
+    // Spin button event: disable buttons, spin the wheel, then highlight the winner's label (using text-shadow)
     spinBtn.addEventListener('click', () => {
       if (players.length === 0) return;
       disableAllButtons();
@@ -563,7 +576,7 @@
       }, spinDuration);
     });
 
-    // Reset button event: clear all information and reinitialize an empty form
+    // Reset button event: clear all data and reinitialize the form
     resetBtn.addEventListener('click', () => {
       disableAllButtons();
       players = [];
@@ -583,7 +596,7 @@
       }, 500);
     });
 
-    // Statistics button event: display statistics modal with a modern card interface
+    // Statistics button event: display statistics in a modal
     statsBtn.addEventListener('click', () => {
       let stats = players.map(name => ({
         name: name,
