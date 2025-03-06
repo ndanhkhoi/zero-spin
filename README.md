@@ -20,27 +20,15 @@ Zero Spin is a modern web application that lets you spin a wheel to randomly sel
 
 - **Shareable Link Generation**
    - A share button automatically generates a link with the current player list encoded in the URL (e.g., `https://your-domain/?players=Alice,Bob,Charlie`).
-   - The link is automatically copied to the clipboard using the Clipboard API, and a success notification is shown.
-   - The share button text is simplified to “Share” for clarity.
+   - The link is automatically copied to the clipboard using the Clipboard API.
 
 - **Win Statistics**
    - After each spin, the win count for each player is updated.
-   - A statistics modal presents each player’s win count in a modern card layout.
+   - A statistics modal presents each player’s win count.
    - The modal is accessible via a “View Statistics” button.
 
-- **Custom Alert Notifications**
-   - All alerts (e.g., link-copy success, input errors) appear in a fixed high-z-index container, ensuring they are visible above modals.
-   - Alerts auto-dismiss after a few seconds with a smooth fade-out.
-
-- **Reset Functionality**
-   - A reset button clears all inputs, resets the wheel, and resets the win statistics.
-
 - **Progressive Web App (PWA) Ready**
-   - The application includes a Service Worker (`sw.js`) and a manifest file (`manifest.json`) to enable PWA functionality if deployed on a compatible web server.
-
-- **Code Organization & Refactoring**
-   - The code is modularized by extracting common logic into reusable functions (e.g., `loadLanguage()`, `loadPlayers()`, etc.) for better maintainability.
-   - URL parameters and localStorage are used in tandem to persist both language settings and player lists.
+   - The application includes a Service Worker (`sw.js`) and a manifest file (`manifest.json`) to enable PWA functionality if deployed on a compatible web 
 
 ## Usage
 
