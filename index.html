@@ -112,11 +112,12 @@
       padding: 0.2rem 0.4rem;
       border-radius: 0.2rem;
       display: inline-block;
+      /* Enhanced animation for result display */
       animation: resultHighlight 0.5s ease-out;
     }
     @keyframes resultHighlight {
       0% { transform: scale(0.8); opacity: 0; }
-      50% { transform: scale(1.1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 1; } /* Increased scale for a clearer effect */
       100% { transform: scale(1); opacity: 1; }
     }
     /* Common button styles */
@@ -264,6 +265,7 @@
     const spinDuration = 4000;
     let spinCount = 0;
     let winCounts = {};
+    let lastWinner = ''; // Global variable to store the last winning result
     let currentLanguage = 'vi';
 
     // Translation object for UI texts
@@ -562,9 +564,14 @@
     // Spin button event: disable buttons, disable language select, display "spinning" message, spin the wheel, then display result and re-enable language select
     spinBtn.addEventListener('click', () => {
       if (players.length === 0) return;
+      
+      // Remove any existing winner highlight immediately when starting spin
+      const labels = wheelContainer.querySelectorAll('.wheel-label');
+      labels.forEach(label => label.classList.remove('winner'));
+      
       // Disable language select while spinning
       document.getElementById('languageSelect').disabled = true;
-      // Display spinning message from translations (multi-language)
+      // Display spinning message
       winningDisplay.innerHTML = translations.spinning[currentLanguage];
       
       disableAllButtons();
@@ -580,15 +587,19 @@
       const winningIndex = Math.floor((360 - normalizedAngle) / segmentAngle) % players.length;
       const winnerName = players[winningIndex];
       winCounts[winnerName] = (winCounts[winnerName] || 0) + 1;
+      
+      // Save the last winner for statistics modal
+      lastWinner = winnerName;
 
       setTimeout(() => {
+        // After spin finishes, highlight the winning label
         const labels = wheelContainer.querySelectorAll('.wheel-label');
         labels.forEach(label => label.classList.remove('winner'));
         if (labels[winningIndex]) {
           labels[winningIndex].classList.add('winner');
           winningDisplay.innerHTML = `${translations.result[currentLanguage]} <span class="winner-result">${winnerName}</span> 🎉`;
         }
-        // Re-enable language select after spinning is finished
+        // Re-enable language select and buttons after spin
         document.getElementById('languageSelect').disabled = false;
         enableAllButtons();
       }, spinDuration);
@@ -614,7 +625,7 @@
       }, 500);
     });
 
-    // Statistics button event: display statistics in a modal
+    // Statistics button event: display statistics in a modal, including the last spin result
     statsBtn.addEventListener('click', () => {
       let stats = players.map(name => ({
         name: name,
@@ -622,7 +633,10 @@
       }));
       stats.sort((a, b) => b.wins - a.wins);
 
-      let html = '<p class="mb-3">' + translations.numberOfSpins[currentLanguage] + ' ' + spinCount + '</p>';
+      // Show last result if available, then show number of spins
+      let recentResultHtml = lastWinner ? `<p class="mb-3">${translations.result[currentLanguage]} <span class="winner-result">${lastWinner}</span></p>` : '';
+      let html = recentResultHtml + `<p class="mb-3">${translations.numberOfSpins[currentLanguage]} ${spinCount}</p>`;
+      
       stats.forEach((item, index) => {
         let emoji = '';
         if (index === 0) emoji = '🥇';
