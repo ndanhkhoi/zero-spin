@@ -28,7 +28,7 @@ Zero Spin is a modern web application that lets you spin a wheel to randomly sel
    - The modal is accessible via a “View Statistics” button.
 
 - **Progressive Web App (PWA) Ready**
-   - The application includes a Service Worker (`sw.js`) and a manifest file (`manifest.json`) to enable PWA functionality if deployed on a compatible web 
+   - The application includes a Service Worker (`sw.js`) and a manifest file (`manifest.json`) to enable PWA functionality if deployed on a compatible web server.
 
 ## Usage
 
