@@ -94,20 +94,30 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    /* Highlight winner's label: highlight the text using text-shadow only */
+    /* Highlight winner's label using text-shadow only */
     .winner {
-      /* Highlight chữ bằng text-shadow, không dùng background để không làm chìm nội dung */
       text-shadow: 0 0 5px yellow, 0 0 10px yellow;
     }
-    /* Display result section */
+    /* Result display section */
     #winningDisplay {
       font-size: 1.5rem;
       margin-top: 1rem;
+      transition: all 0.5s ease;
     }
+    /* Style for the highlighted winner's text in the result */
     .winner-result {
       font-weight: bold;
-      color: #d00;
-      text-decoration: underline;
+      color: #0d6efd;           /* Bootstrap primary color */
+      background-color: #cfe2ff; /* Light primary background */
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.2rem;
+      display: inline-block;
+      animation: resultHighlight 0.5s ease-out;
+    }
+    @keyframes resultHighlight {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
     }
     /* Common button styles */
     .btn-custom {
@@ -311,7 +321,7 @@
       }, 3000);
     }
 
-    // Load language from URL params (if exists) or from localStorage
+    // Load language from URL params or localStorage
     function loadLanguage() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('lang')) {
@@ -323,7 +333,7 @@
       document.getElementById('languageSelect').value = currentLanguage;
     }
 
-    // Load players from URL params (if exists) or from localStorage and initialize the form and wheel
+    // Load players from URL params or localStorage and initialize the form and wheel
     function loadPlayers() {
       const urlParams = new URLSearchParams(window.location.search);
       let loadedPlayers = [];
