@@ -23,12 +23,12 @@
       opacity: 0;
       transition: opacity 0.5s ease-in-out;
     }
-    /* Alert container for custom notifications */
+    /* Alert container for custom notifications (z-index set higher than modals) */
     #alertContainer {
       position: fixed;
       top: 20px;
       right: 20px;
-      z-index: 1050;
+      z-index: 9999;
     }
     /* Container for the wheel with white border & shadow */
     .wheel-wrapper {
@@ -156,7 +156,7 @@
         <header class="text-center mb-2">
           <h1>Zero Spin 🎰</h1>
         </header>
-        <!-- Language selection below title using Bootstrap form-select -->
+        <!-- Language selection using Bootstrap form-select -->
         <div class="text-center mb-3">
           <label for="languageSelect" data-key="selectLanguageLabel">Chọn ngôn ngữ:</label>
           <select id="languageSelect" class="form-select d-inline-block w-auto ms-2">
@@ -184,17 +184,16 @@
               </div>
               <div class="modal-body">
                 <div id="playerForm"></div>
-                <!-- (No in-modal notifications now) -->
+                <!-- No in-modal notifications; add player button aligns with delete buttons -->
                 <div class="text-end">
-                  <!-- 'Add player' button now uses btn-success -->
-                  <button type="button" class="btn btn-success btn-custom" id="addPlayerBtn" title="Add player">
+                  <button type="button" class="btn btn-secondary btn-custom" id="addPlayerBtn" title="Add player">
                     <i class="fa-solid fa-plus"></i>
                   </button>
                 </div>
               </div>
               <div class="modal-footer">
-                <!-- Confirm button with label next to icon -->
-                <button type="button" class="btn btn-success" id="confirmPlayers">
+                <!-- Confirm button styled as primary -->
+                <button type="button" class="btn btn-primary" id="confirmPlayers">
                   <i class="fa-solid fa-check"></i> <span data-key="confirm">Xác nhận</span>
                 </button>
               </div>
@@ -214,7 +213,7 @@
         <!-- Display result -->
         <div id="winningDisplay" class="text-center text-primary"></div>
 
-        <!-- Statistics and Share buttons (both using regular btn style) -->
+        <!-- Statistics and Share buttons (both using btn-secondary) -->
         <div class="text-center mt-3">
           <button id="statsBtn" class="btn btn-secondary btn-custom">
             <i class="fa-solid fa-chart-bar"></i> <span data-key="showStatistics">Thống kê kết quả</span>
