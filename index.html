@@ -186,7 +186,8 @@
                 <div id="playerForm"></div>
                 <!-- (No in-modal notifications now) -->
                 <div class="text-end">
-                  <button type="button" class="btn btn-secondary" id="addPlayerBtn" title="Add player">
+                  <!-- 'Add player' button now uses btn-success -->
+                  <button type="button" class="btn btn-success btn-custom" id="addPlayerBtn" title="Add player">
                     <i class="fa-solid fa-plus"></i>
                   </button>
                 </div>
@@ -213,12 +214,12 @@
         <!-- Display result -->
         <div id="winningDisplay" class="text-center text-primary"></div>
 
-        <!-- Statistics and Share buttons placed together -->
+        <!-- Statistics and Share buttons (both using regular btn style) -->
         <div class="text-center mt-3">
-          <button id="statsBtn" class="btn btn-info btn-custom">
+          <button id="statsBtn" class="btn btn-secondary btn-custom">
             <i class="fa-solid fa-chart-bar"></i> <span data-key="showStatistics">Thống kê kết quả</span>
           </button>
-          <button id="shareLinkBtn" class="btn btn-info btn-custom">
+          <button id="shareLinkBtn" class="btn btn-secondary btn-custom">
             <i class="fa-solid fa-share"></i> <span data-key="share">Chia sẻ</span>
           </button>
         </div>
@@ -475,7 +476,6 @@
       url.searchParams.set('players', players.join(','));
       window.history.replaceState(null, '', url.toString());
       
-      // Clear any alert if needed (no in-modal alerts now)
       createWheel();
       spinBtn.disabled = false;
       statsBtn.disabled = false;
