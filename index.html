@@ -14,7 +14,7 @@
   <!-- FontAwesome CDN -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    /* Background color for the page (white) */
+    /* Page background color */
     body {
       background-color: #ffffff;
     }
@@ -22,6 +22,13 @@
     #appCard {
       opacity: 0;
       transition: opacity 0.5s ease-in-out;
+    }
+    /* Alert container for custom notifications (z-index set higher than modals) */
+    #alertContainer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
     }
     /* Container for the wheel with white border & shadow */
     .wheel-wrapper {
@@ -40,7 +47,7 @@
       overflow: hidden;
       transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
     }
-    /* Pointer */
+    /* Pointer style */
     #pointer {
       position: absolute;
       top: -30px;
@@ -50,7 +57,7 @@
       color: #d00;
       z-index: 3;
     }
-    /* Spin Button: round, white background, only shows play icon */
+    /* Spin Button styling */
     #spinBtn {
       position: absolute;
       top: 50%;
@@ -71,7 +78,7 @@
       color: black;
       font-size: 24px;
     }
-    /* Label for displaying player's name on the wheel */
+    /* Label for displaying player names on the wheel */
     .wheel-label {
       position: absolute;
       left: 40%;
@@ -87,14 +94,14 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    /* Highlight winner's label */
+    /* Highlight winner's label: use background highlight and text shadow */
     .winner {
-      border: 2px solid yellow;
-      box-shadow: 0 0 10px 5px rgba(255,255,0,0.7);
+      background-color: yellow;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
       border-radius: 5px;
       padding: 2px 4px;
     }
-    /* Result display section */
+    /* Display result section */
     #winningDisplay {
       font-size: 1.5rem;
       margin-top: 1rem;
@@ -139,459 +146,467 @@
   </style>
 </head>
 <body>
-<div class="container mt-4">
-  <div id="appCard" class="card border-0 mx-auto" style="max-width: 800px; border-radius: 0.5rem;">
-    <div class="card-body">
-      <!-- Header with emoji -->
-      <header class="text-center mb-2">
-        <h1>Zero Spin 🎰</h1>
-      </header>
-      <!-- Language selection below title using Bootstrap form-select -->
-      <div class="text-center mb-3">
-        <label for="languageSelect" data-key="selectLanguageLabel">Chọn ngôn ngữ:</label>
-        <select id="languageSelect" class="form-select d-inline-block w-auto ms-2">
-          <option value="vi" selected>Tiếng Việt</option>
-          <option value="en">English</option>
-        </select>
-      </div>
+  <!-- Custom alert container -->
+  <div id="alertContainer"></div>
+  
+  <div class="container mt-4">
+    <div id="appCard" class="card border-0 mx-auto" style="max-width: 800px; border-radius: 0.5rem;">
+      <div class="card-body">
+        <!-- Header with emoji -->
+        <header class="text-center mb-2">
+          <h1>Zero Spin 🎰</h1>
+        </header>
+        <!-- Language selection using Bootstrap form-select -->
+        <div class="text-center mb-3">
+          <label for="languageSelect" data-key="selectLanguageLabel">Chọn ngôn ngữ:</label>
+          <select id="languageSelect" class="form-select d-inline-block w-auto ms-2">
+            <option value="vi" selected>Tiếng Việt</option>
+            <option value="en">English</option>
+          </select>
+        </div>
 
-      <!-- Buttons for entering player list & Reset -->
-      <div class="text-center mb-3">
-        <button id="openModalBtn" class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#playerModal">
-          <i class="fa-solid fa-user"></i> <span data-key="enterPlayerList">Nhập danh sách người chơi</span>
-        </button>
-        <button class="btn btn-secondary btn-custom" id="resetBtn">
-          <i class="fa-solid fa-rotate-left"></i> <span data-key="reset">Reset</span>
-        </button>
-      </div>
+        <!-- Buttons for entering player list & Reset -->
+        <div class="text-center mb-3">
+          <button id="openModalBtn" class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#playerModal">
+            <i class="fa-solid fa-user"></i> <span data-key="enterPlayerList">Nhập danh sách người chơi</span>
+          </button>
+          <button class="btn btn-secondary btn-custom" id="resetBtn">
+            <i class="fa-solid fa-rotate-left"></i> <span data-key="reset">Reset</span>
+          </button>
+        </div>
 
-      <!-- Modal for entering player information -->
-      <div class="modal fade" id="playerModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="playerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="playerModalLabel" data-key="playerModalLabel">Nhập thông tin người chơi</h5>
-            </div>
-            <div class="modal-body">
-              <div id="playerForm"></div>
-              <!-- Notification area for player modal -->
-              <div id="modalStatus"></div>
-              <div class="text-end">
-                <button type="button" class="btn btn-secondary" id="addPlayerBtn" title="Add player">
-                  <i class="fa-solid fa-plus"></i>
+        <!-- Modal for entering player information -->
+        <div class="modal fade" id="playerModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="playerModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="playerModalLabel" data-key="playerModalLabel">Nhập thông tin người chơi</h5>
+              </div>
+              <div class="modal-body">
+                <div id="playerForm"></div>
+                <!-- No in-modal notifications; add player button aligns with delete buttons -->
+                <div class="text-end">
+                  <button type="button" class="btn btn-secondary btn-custom" id="addPlayerBtn" title="Add player">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <!-- Confirm button styled as primary -->
+                <button type="button" class="btn btn-primary" id="confirmPlayers">
+                  <i class="fa-solid fa-check"></i> <span data-key="confirm">Xác nhận</span>
                 </button>
               </div>
             </div>
-            <div class="modal-footer flex-column">
-              <!-- Chỉ giữ nút xác nhận trong modal -->
-              <button type="button" class="btn btn-success" id="confirmPlayers">
-                <i class="fa-solid fa-check"></i> <span data-key="confirm">Xác nhận</span>
-              </button>
+          </div>
+        </div>
+
+        <!-- Section displaying the wheel & Spin button -->
+        <div class="wheel-wrapper my-4">
+          <div id="wheel-container"></div>
+          <div id="pointer"><i class="fa-solid fa-caret-down"></i></div>
+          <button id="spinBtn" class="btn btn-white btn-custom">
+            <i class="fa-solid fa-play"></i>
+          </button>
+        </div>
+
+        <!-- Display result -->
+        <div id="winningDisplay" class="text-center text-primary"></div>
+
+        <!-- Statistics and Share buttons (both using btn-secondary) -->
+        <div class="text-center mt-3">
+          <button id="statsBtn" class="btn btn-secondary btn-custom">
+            <i class="fa-solid fa-chart-bar"></i> <span data-key="showStatistics">Thống kê kết quả</span>
+          </button>
+          <button id="shareLinkBtn" class="btn btn-secondary btn-custom">
+            <i class="fa-solid fa-share"></i> <span data-key="share">Chia sẻ</span>
+          </button>
+        </div>
+
+        <!-- Modern statistics modal -->
+        <div class="modal fade" id="statsModal" tabindex="-1" aria-labelledby="statsModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-sm">
+              <div class="modal-header">
+                <h5 class="modal-title" id="statsModalLabel" data-key="statsModalLabel">Thống kê kết quả</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body" id="statsContent">
+                <!-- Statistics content will be generated as modern cards -->
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  <span data-key="close">Đóng</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
+
       </div>
-
-      <!-- Section displaying the wheel & Spin button -->
-      <div class="wheel-wrapper my-4">
-        <div id="wheel-container"></div>
-        <div id="pointer"><i class="fa-solid fa-caret-down"></i></div>
-        <button id="spinBtn" class="btn btn-white btn-custom">
-          <i class="fa-solid fa-play"></i>
-        </button>
-      </div>
-
-      <!-- Display result -->
-      <div id="winningDisplay" class="text-center text-primary"></div>
-
-      <!-- Statistics and Share Link buttons placed cùng nhau -->
-      <div class="text-center mt-3">
-        <button id="statsBtn" class="btn btn-info btn-custom">
-          <i class="fa-solid fa-chart-bar"></i> <span data-key="showStatistics">Thống kê kết quả</span>
-        </button>
-        <button id="shareLinkBtn" class="btn btn-info btn-custom">
-          <i class="fa-solid fa-share"></i> <span data-key="shareLink">Chia sẻ link</span>
-        </button>
-      </div>
-
-      <!-- Modern statistics modal -->
-      <div class="modal fade" id="statsModal" tabindex="-1" aria-labelledby="statsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content shadow-sm">
-            <div class="modal-header">
-              <h5 class="modal-title" id="statsModalLabel" data-key="statsModalLabel">Thống kê kết quả</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="statsContent">
-              <!-- Statistics content will be generated as modern cards -->
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                <span data-key="close">Đóng</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
-</div>
 
-<!-- Bootstrap 5 JS Bundle (includes Popper) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  // Global variables
-  let players = [];
-  let currentAngle = 0;
-  const spinDuration = 4000;
-  let spinCount = 0;
-  let winCounts = {};
-  let currentLanguage = 'vi';
+  <!-- Bootstrap 5 JS Bundle (includes Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Global variables
+    let players = [];
+    let currentAngle = 0;
+    const spinDuration = 4000;
+    let spinCount = 0;
+    let winCounts = {};
+    let currentLanguage = 'vi';
 
-  // Translation object for UI texts
-  const translations = {
-    selectLanguageLabel: { vi: "Chọn ngôn ngữ:", en: "Select language:" },
-    enterPlayerList: { vi: "Nhập danh sách người chơi", en: "Enter player list" },
-    reset: { vi: "Reset", en: "Reset" },
-    playerModalLabel: { vi: "Nhập thông tin người chơi", en: "Enter player information" },
-    playerInputPlaceholder: { vi: "Nhập tên người chơi", en: "Enter player name" },
-    pleaseEnterAllPlayerNames: { vi: "Vui lòng nhập đầy đủ tên của tất cả người chơi!", en: "Please enter all player names!" },
-    linkCopied: { vi: "Đã copy link vào clipboard!", en: "Link copied to clipboard!" },
-    errorCopyingLink: { vi: "Lỗi khi copy link: ", en: "Error copying link: " },
-    result: { vi: "Kết quả:", en: "Result:" },
-    showStatistics: { vi: "Thống kê kết quả", en: "Show statistics" },
-    statsModalLabel: { vi: "Thống kê kết quả", en: "Statistics" },
-    close: { vi: "Đóng", en: "Close" },
-    numberOfSpins: { vi: "Số lần quay:", en: "Number of spins:" },
-    confirm: { vi: "Xác nhận", en: "Confirm" },
-    shareLink: { vi: "Chia sẻ link", en: "Share link" }
-  };
+    // Translation object for UI texts
+    const translations = {
+      selectLanguageLabel: { vi: "Chọn ngôn ngữ:", en: "Select language:" },
+      enterPlayerList: { vi: "Nhập danh sách người chơi", en: "Enter player list" },
+      reset: { vi: "Reset", en: "Reset" },
+      playerModalLabel: { vi: "Nhập thông tin người chơi", en: "Enter player information" },
+      playerInputPlaceholder: { vi: "Nhập tên người chơi", en: "Enter player name" },
+      pleaseEnterAllPlayerNames: { vi: "Vui lòng nhập đầy đủ tên của tất cả người chơi!", en: "Please enter all player names!" },
+      linkCopied: { vi: "Đã copy link vào clipboard!", en: "Link copied to clipboard!" },
+      errorCopyingLink: { vi: "Lỗi khi copy link: ", en: "Error copying link: " },
+      result: { vi: "Kết quả:", en: "Result:" },
+      showStatistics: { vi: "Thống kê kết quả", en: "Show statistics" },
+      statsModalLabel: { vi: "Thống kê kết quả", en: "Statistics" },
+      close: { vi: "Đóng", en: "Close" },
+      numberOfSpins: { vi: "Số lần quay:", en: "Number of spins:" },
+      confirm: { vi: "Xác nhận", en: "Confirm" },
+      share: { vi: "Chia sẻ", en: "Share" }
+    };
 
-  // Function to update UI texts according to the selected language with fade effect
-  function updateLanguage() {
-    document.querySelectorAll('[data-key]').forEach(el => {
-      el.style.opacity = 0;
+    // Function to update UI texts according to the selected language with fade effect
+    function updateLanguage() {
+      document.querySelectorAll('[data-key]').forEach(el => {
+        el.style.opacity = 0;
+        setTimeout(() => {
+          const key = el.getAttribute('data-key');
+          if (translations[key]) {
+            el.textContent = translations[key][currentLanguage];
+          }
+          el.style.opacity = 1;
+        }, 150);
+      });
+      // Update placeholder for all player input fields
+      document.querySelectorAll('.player-input').forEach(input => {
+        input.placeholder = translations.playerInputPlaceholder[currentLanguage];
+      });
+    }
+
+    // Custom alert function using Bootstrap alerts
+    function showAlert(message, type) {
+      const alertContainer = document.getElementById('alertContainer');
+      if (!alertContainer) return;
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-' + type + ' alert-dismissible fade show';
+      alertDiv.setAttribute('role', 'alert');
+      alertDiv.innerHTML = message + 
+        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+      alertContainer.appendChild(alertDiv);
+      // Auto-dismiss after 3 seconds
       setTimeout(() => {
-        const key = el.getAttribute('data-key');
-        if (translations[key]) {
-          el.textContent = translations[key][currentLanguage];
+        alertDiv.classList.remove('show');
+        alertDiv.classList.add('hide');
+        setTimeout(() => alertDiv.remove(), 500);
+      }, 3000);
+    }
+
+    // Language select event – store chosen language in localStorage
+    document.getElementById('languageSelect').addEventListener('change', (e) => {
+      currentLanguage = e.target.value;
+      localStorage.setItem('language', currentLanguage);
+      updateLanguage();
+    });
+
+    // On page load, check localStorage for saved language and update player form and wheel if params exist
+    window.addEventListener('load', () => {
+      const storedLang = localStorage.getItem('language');
+      if (storedLang) {
+        currentLanguage = storedLang;
+        document.getElementById('languageSelect').value = currentLanguage;
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('players')) {
+        const paramPlayers = urlParams.get('players');
+        const playerNames = paramPlayers.split(',').map(name => name.trim()).filter(name => name);
+        if (playerNames.length > 0) {
+          players = playerNames;
+          document.getElementById('playerForm').innerHTML = '';
+          playerNames.forEach(name => document.getElementById('playerForm').appendChild(createPlayerRow(name)));
+          updateDeleteButtons();
+          checkPlayerInputs();
+          createWheel();
+        } else {
+          buildDefaultPlayerForm();
+          document.getElementById('wheel-container').innerHTML = '';
+          spinBtn.disabled = true;
+          statsBtn.disabled = true;
         }
-        el.style.opacity = 1;
-      }, 150);
-    });
-    // Update placeholder for all player input fields
-    document.querySelectorAll('.player-input').forEach(input => {
-      input.placeholder = translations.playerInputPlaceholder[currentLanguage];
-    });
-  }
-
-  // Function to show alert message in modal using Bootstrap alert classes
-  // message: the alert text; type: 'success' or 'danger'
-  function showModalStatus(message, type) {
-    if (!message) {
-      // Clear the alert if message is empty
-      document.getElementById('modalStatus').innerHTML = "";
-      return;
-    }
-    document.getElementById('modalStatus').innerHTML = '<div class="alert alert-' + type + '" role="alert">' + message + '</div>';
-  }
-
-  // Language select event – lưu ngôn ngữ đã chọn vào localStorage
-  document.getElementById('languageSelect').addEventListener('change', (e) => {
-    currentLanguage = e.target.value;
-    localStorage.setItem('language', currentLanguage);
-    updateLanguage();
-  });
-
-  // On page load, kiểm tra localStorage để load ngôn ngữ cũ (nếu có)
-  window.addEventListener('load', () => {
-    const storedLang = localStorage.getItem('language');
-    if (storedLang) {
-      currentLanguage = storedLang;
-      document.getElementById('languageSelect').value = currentLanguage;
-    }
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('players')) {
-      const paramPlayers = urlParams.get('players');
-      const playerNames = paramPlayers.split(',').map(name => name.trim()).filter(name => name);
-      if (playerNames.length > 0) {
-        players = playerNames;
-        document.getElementById('playerForm').innerHTML = '';
-        playerNames.forEach(name => document.getElementById('playerForm').appendChild(createPlayerRow(name)));
-        updateDeleteButtons();
-        checkPlayerInputs();
-        createWheel();
       } else {
         buildDefaultPlayerForm();
         document.getElementById('wheel-container').innerHTML = '';
         spinBtn.disabled = true;
         statsBtn.disabled = true;
       }
-    } else {
-      buildDefaultPlayerForm();
-      document.getElementById('wheel-container').innerHTML = '';
-      spinBtn.disabled = true;
-      statsBtn.disabled = true;
-    }
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js')
-              .then(reg => console.log('Service Worker registered', reg))
-              .catch(err => console.error('Service Worker registration failed', err));
-    }
-    // Initialize language texts and fade in the card
-    updateLanguage();
-    document.getElementById('appCard').style.opacity = 1;
-  });
-
-  // Get DOM elements
-  const playerFormDiv = document.getElementById('playerForm');
-  const modalStatusDiv = document.getElementById('modalStatus');
-  const addPlayerBtn = document.getElementById('addPlayerBtn');
-  const confirmPlayersBtn = document.getElementById('confirmPlayers');
-  const shareLinkBtn = document.getElementById('shareLinkBtn');
-  const openModalBtn = document.getElementById('openModalBtn');
-  const wheelContainer = document.getElementById('wheel-container');
-  const spinBtn = document.getElementById('spinBtn');
-  const resetBtn = document.getElementById('resetBtn');
-  const winningDisplay = document.getElementById('winningDisplay');
-  const statsBtn = document.getElementById('statsBtn');
-  const statsContent = document.getElementById('statsContent');
-  const playerModalEl = document.getElementById('playerModal');
-  const statsModalEl = document.getElementById('statsModal');
-  const modalInstance = new bootstrap.Modal(playerModalEl);
-  const statsModalInstance = new bootstrap.Modal(statsModalEl);
-
-  // Function to disable/enable all buttons
-  function disableAllButtons() {
-    document.querySelectorAll('button').forEach(btn => btn.disabled = true);
-  }
-  function enableAllButtons() {
-    document.querySelectorAll('button').forEach(btn => btn.disabled = false);
-    updateDeleteButtons();
-  }
-
-  // Update delete button status: if number of fields <= 2 then disable delete button
-  function updateDeleteButtons() {
-    const rows = document.querySelectorAll('.player-row');
-    rows.forEach(row => {
-      const delBtn = row.querySelector('.delete-btn');
-      delBtn.disabled = (rows.length <= 2);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker registered', reg))
+          .catch(err => console.error('Service Worker registration failed', err));
+      }
+      // Initialize language texts and fade in the card
+      updateLanguage();
+      document.getElementById('appCard').style.opacity = 1;
     });
-  }
 
-  // Create a row containing input and delete button for a player
-  function createPlayerRow(value = '') {
-    const div = document.createElement('div');
-    div.className = 'player-row';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'form-control player-input';
-    input.placeholder = translations.playerInputPlaceholder[currentLanguage];
-    input.value = value;
-    // Check input to disable spin & statistics buttons if any field is empty
-    input.addEventListener('input', checkPlayerInputs);
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'btn btn-danger delete-btn';
-    delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-    delBtn.addEventListener('click', () => {
-      div.remove();
+    // Get DOM elements
+    const playerFormDiv = document.getElementById('playerForm');
+    const addPlayerBtn = document.getElementById('addPlayerBtn');
+    const confirmPlayersBtn = document.getElementById('confirmPlayers');
+    const shareLinkBtn = document.getElementById('shareLinkBtn');
+    const wheelContainer = document.getElementById('wheel-container');
+    const spinBtn = document.getElementById('spinBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const winningDisplay = document.getElementById('winningDisplay');
+    const statsBtn = document.getElementById('statsBtn');
+    const statsContent = document.getElementById('statsContent');
+    const playerModalEl = document.getElementById('playerModal');
+    const statsModalEl = document.getElementById('statsModal');
+    const modalInstance = new bootstrap.Modal(playerModalEl);
+    const statsModalInstance = new bootstrap.Modal(statsModalEl);
+
+    // Function to disable all buttons
+    function disableAllButtons() {
+      document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+    }
+    // Function to enable all buttons and update delete buttons
+    function enableAllButtons() {
+      document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+      updateDeleteButtons();
+    }
+
+    // Update delete buttons: disable if there are only 2 fields
+    function updateDeleteButtons() {
+      const rows = document.querySelectorAll('.player-row');
+      rows.forEach(row => {
+        const delBtn = row.querySelector('.delete-btn');
+        delBtn.disabled = (rows.length <= 2);
+      });
+    }
+
+    // Create a row with an input and delete button for a player
+    function createPlayerRow(value = '') {
+      const div = document.createElement('div');
+      div.className = 'player-row';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'form-control player-input';
+      input.placeholder = translations.playerInputPlaceholder[currentLanguage];
+      input.value = value;
+      // Check input to enable/disable spin & statistics buttons if any field is empty
+      input.addEventListener('input', checkPlayerInputs);
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn btn-danger delete-btn';
+      delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+      delBtn.addEventListener('click', () => {
+        div.remove();
+        updateDeleteButtons();
+        checkPlayerInputs();
+      });
+      div.appendChild(input);
+      div.appendChild(delBtn);
+      return div;
+    }
+
+    // Check if all input fields are filled to enable spin, statistics, and share buttons
+    function checkPlayerInputs() {
+      const inputs = document.querySelectorAll('.player-input');
+      let allFilled = true;
+      inputs.forEach(input => {
+        if (input.value.trim() === '') {
+          allFilled = false;
+        }
+      });
+      spinBtn.disabled = !allFilled;
+      statsBtn.disabled = !allFilled;
+      shareLinkBtn.disabled = !allFilled;
+    }
+
+    // Initialize default form with 2 empty input fields
+    function buildDefaultPlayerForm() {
+      playerFormDiv.innerHTML = '';
+      for (let i = 0; i < 2; i++) {
+        playerFormDiv.appendChild(createPlayerRow());
+      }
       updateDeleteButtons();
       checkPlayerInputs();
-    });
-    div.appendChild(input);
-    div.appendChild(delBtn);
-    return div;
-  }
+    }
 
-  // Check if all input fields have names to enable spin and statistics buttons
-  function checkPlayerInputs() {
-    const inputs = document.querySelectorAll('.player-input');
-    let allFilled = true;
-    inputs.forEach(input => {
-      if (input.value.trim() === '') {
-        allFilled = false;
+    // 'Add player' button event: add a new field and focus on it
+    addPlayerBtn.addEventListener('click', () => {
+      const newRow = createPlayerRow();
+      playerFormDiv.appendChild(newRow);
+      updateDeleteButtons();
+      newRow.querySelector('.player-input').focus();
+      checkPlayerInputs();
+    });
+
+    // Confirm button event: validate inputs, update URL params, and create the wheel
+    confirmPlayersBtn.addEventListener('click', () => {
+      players = [];
+      const inputs = document.querySelectorAll('.player-input');
+      let allEntered = true;
+      inputs.forEach(input => {
+        if (input.value.trim() === '') {
+          showAlert(translations.pleaseEnterAllPlayerNames[currentLanguage], 'danger');
+          allEntered = false;
+        }
+      });
+      if (!allEntered) return;
+      inputs.forEach(input => players.push(input.value.trim()));
+      // Initialize win counts for new players if not set
+      players.forEach(name => {
+        if (winCounts[name] === undefined) winCounts[name] = 0;
+      });
+      // Update URL params using URLSearchParams
+      const url = new URL(window.location.href);
+      url.searchParams.set('players', players.join(','));
+      window.history.replaceState(null, '', url.toString());
+      
+      createWheel();
+      spinBtn.disabled = false;
+      statsBtn.disabled = false;
+      shareLinkBtn.disabled = false;
+      modalInstance.hide();
+    });
+
+    // Share button event: copy current URL to clipboard
+    shareLinkBtn.addEventListener('click', () => {
+      if (players.length === 0) {
+        showAlert(translations.pleaseEnterAllPlayerNames[currentLanguage], 'danger');
+        return;
       }
+      const url = new URL(window.location.href);
+      url.searchParams.set('players', players.join(','));
+      const shareUrl = url.toString();
+      navigator.clipboard.writeText(shareUrl)
+        .then(() => {
+          showAlert(translations.linkCopied[currentLanguage], 'success');
+        })
+        .catch(err => {
+          showAlert(translations.errorCopyingLink[currentLanguage] + err, 'danger');
+        });
     });
-    spinBtn.disabled = !allFilled;
-    statsBtn.disabled = !allFilled;
-    shareLinkBtn.disabled = !allFilled;
-  }
 
-  // Initialize default form with 2 empty input fields
-  function buildDefaultPlayerForm() {
-    playerFormDiv.innerHTML = '';
-    for (let i = 0; i < 2; i++) {
-      playerFormDiv.appendChild(createPlayerRow());
-    }
-    updateDeleteButtons();
-    checkPlayerInputs();
-  }
-
-  // 'Add player' button event: add a new field and focus on it
-  addPlayerBtn.addEventListener('click', () => {
-    const newRow = createPlayerRow();
-    playerFormDiv.appendChild(newRow);
-    updateDeleteButtons();
-    newRow.querySelector('.player-input').focus();
-    checkPlayerInputs();
-  });
-
-  // Confirm button event
-  confirmPlayersBtn.addEventListener('click', () => {
-    players = [];
-    const inputs = document.querySelectorAll('.player-input');
-    let allEntered = true;
-    inputs.forEach(input => {
-      if (input.value.trim() === '') {
-        showModalStatus(translations.pleaseEnterAllPlayerNames[currentLanguage], 'danger');
-        allEntered = false;
+    // Create the wheel with player segments and labels
+    function createWheel() {
+      wheelContainer.innerHTML = '';
+      const numPlayers = players.length;
+      const segmentAngle = 360 / numPlayers;
+      let gradientStr = 'conic-gradient(';
+      for (let i = 0; i < numPlayers; i++) {
+        let startAngle = i * segmentAngle;
+        let endAngle = (i + 1) * segmentAngle;
+        let color = `hsl(${i * (360 / numPlayers)}, 70%, 60%)`;
+        gradientStr += `${color} ${startAngle}deg, ${color} ${endAngle}deg`;
+        if (i < numPlayers - 1) gradientStr += ', ';
       }
-    });
-    if (!allEntered) return;
-    inputs.forEach(input => players.push(input.value.trim()));
-    // Initialize statistics for each player if not already present
-    players.forEach(name => {
-      if (winCounts[name] === undefined) winCounts[name] = 0;
-    });
-    // Cập nhật URL với tham số players
-    const encodedNames = players.map(name => encodeURIComponent(name)).join(',');
-    const newUrl = `${window.location.origin}${window.location.pathname}?players=${encodedNames}`;
-    window.history.replaceState(null, '', newUrl);
-    
-    showModalStatus("", "");
-    createWheel();
-    spinBtn.disabled = false;
-    statsBtn.disabled = false;
-    shareLinkBtn.disabled = false;
-    modalInstance.hide();
-  });
+      gradientStr += ')';
+      wheelContainer.style.background = gradientStr;
 
-  // Share Link button event – copy URL hiện tại vào clipboard
-  shareLinkBtn.addEventListener('click', () => {
-    if (players.length === 0) {
-      showModalStatus(translations.pleaseEnterAllPlayerNames[currentLanguage], 'danger');
-      return;
-    }
-    const encodedNames = players.map(name => encodeURIComponent(name)).join(',');
-    const shareUrl = `${window.location.origin}${window.location.pathname}?players=${encodedNames}`;
-    navigator.clipboard.writeText(shareUrl)
-            .then(() => {
-              showModalStatus(translations.linkCopied[currentLanguage], 'success');
-            })
-            .catch(err => {
-              showModalStatus(translations.errorCopyingLink[currentLanguage] + err, 'danger');
-            });
-  });
-
-  // Function to create the wheel with labelRadius = 80 (display player names)
-  function createWheel() {
-    wheelContainer.innerHTML = '';
-    const numPlayers = players.length;
-    const segmentAngle = 360 / numPlayers;
-    let gradientStr = 'conic-gradient(';
-    for (let i = 0; i < numPlayers; i++) {
-      let startAngle = i * segmentAngle;
-      let endAngle = (i + 1) * segmentAngle;
-      let color = `hsl(${i * (360 / numPlayers)}, 70%, 60%)`;
-      gradientStr += `${color} ${startAngle}deg, ${color} ${endAngle}deg`;
-      if (i < numPlayers - 1) gradientStr += ', ';
-    }
-    gradientStr += ')';
-    wheelContainer.style.background = gradientStr;
-
-    const labelRadius = 110;
-    for (let i = 0; i < numPlayers; i++) {
-      const label = document.createElement('div');
-      label.className = 'wheel-label';
-      label.textContent = players[i];
-      const midAngle = (i + 0.5) * segmentAngle;
-      // Initially display label rotated to position
-      label.style.transform = `rotate(${midAngle}deg) translate(0, -${labelRadius}px) rotate(90deg)`;
-      wheelContainer.appendChild(label);
-    }
-  }
-
-  // Use Web Crypto API to generate a uniformly random number
-  function getRandomAngle() {
-    const randomUint32 = new Uint32Array(1);
-    window.crypto.getRandomValues(randomUint32);
-    return (randomUint32[0] / 0xFFFFFFFF) * 360;
-  }
-
-  // Spin button event
-  spinBtn.addEventListener('click', () => {
-    if (players.length === 0) return;
-    disableAllButtons();
-    const randomAngle = getRandomAngle();
-    const extraSpins = 360 * 5;
-    const spinDegrees = extraSpins + randomAngle;
-    currentAngle += spinDegrees;
-    wheelContainer.style.transform = `rotate(${currentAngle}deg)`;
-
-    spinCount++;
-    const normalizedAngle = currentAngle % 360;
-    const segmentAngle = 360 / players.length;
-    const winningIndex = Math.floor((360 - normalizedAngle) / segmentAngle) % players.length;
-    const winnerName = players[winningIndex];
-    winCounts[winnerName] = (winCounts[winnerName] || 0) + 1;
-
-    setTimeout(() => {
-      const labels = wheelContainer.querySelectorAll('.wheel-label');
-      labels.forEach(label => label.classList.remove('winner'));
-      if (labels[winningIndex]) {
-        labels[winningIndex].classList.add('winner');
-        winningDisplay.innerHTML = `${translations.result[currentLanguage]} <span class="winner-result">${winnerName}</span> 🎉`;
+      const labelRadius = 110;
+      for (let i = 0; i < numPlayers; i++) {
+        const label = document.createElement('div');
+        label.className = 'wheel-label';
+        label.textContent = players[i];
+        const midAngle = (i + 0.5) * segmentAngle;
+        // Position the label correctly on the wheel
+        label.style.transform = `rotate(${midAngle}deg) translate(0, -${labelRadius}px) rotate(90deg)`;
+        wheelContainer.appendChild(label);
       }
-      enableAllButtons();
-    }, spinDuration);
-  });
+    }
 
-  // Reset button event: clear all information and reinitialize empty form, do not auto-spin
-  resetBtn.addEventListener('click', () => {
-    disableAllButtons();
-    players = [];
-    currentAngle = 0;
-    spinCount = 0;
-    winCounts = {};
-    playerFormDiv.innerHTML = '';
-    wheelContainer.innerHTML = '';
-    wheelContainer.style.transform = 'rotate(0deg)';
-    winningDisplay.textContent = '';
-    setTimeout(() => {
-      buildDefaultPlayerForm();
-      spinBtn.disabled = true;
-      statsBtn.disabled = true;
-      shareLinkBtn.disabled = true;
-      enableAllButtons();
-    }, 500);
-  });
+    // Use Web Crypto API to generate a uniformly random number (angle)
+    function getRandomAngle() {
+      const randomUint32 = new Uint32Array(1);
+      window.crypto.getRandomValues(randomUint32);
+      return (randomUint32[0] / 0xFFFFFFFF) * 360;
+    }
 
-  // Statistics button event: display statistics modal with modern card interface
-  statsBtn.addEventListener('click', () => {
-    let stats = players.map(name => ({
-      name: name,
-      wins: winCounts[name] || 0
-    }));
-    stats.sort((a, b) => b.wins - a.wins);
+    // Spin button event: disable buttons, spin the wheel, and update the winner
+    spinBtn.addEventListener('click', () => {
+      if (players.length === 0) return;
+      disableAllButtons();
+      const randomAngle = getRandomAngle();
+      const extraSpins = 360 * 5;
+      const spinDegrees = extraSpins + randomAngle;
+      currentAngle += spinDegrees;
+      wheelContainer.style.transform = `rotate(${currentAngle}deg)`;
 
-    let html = '<p class="mb-3">' + translations.numberOfSpins[currentLanguage] + ' ' + spinCount + '</p>';
-    stats.forEach((item, index) => {
-      let emoji = '';
-      if (index === 0) emoji = '🥇';
-      else if (index === 1) emoji = '🥈';
-      else if (index === stats.length - 1) emoji = '😢';
-      html += `<div class="card stat-card">
-           <div class="card-body d-flex justify-content-between align-items-center">
-             <div>${index + 1}. ${item.name} ${emoji}</div>
-             <div>${item.wins}</div>
-           </div>
-         </div>`;
+      spinCount++;
+      const normalizedAngle = currentAngle % 360;
+      const segmentAngle = 360 / players.length;
+      const winningIndex = Math.floor((360 - normalizedAngle) / segmentAngle) % players.length;
+      const winnerName = players[winningIndex];
+      winCounts[winnerName] = (winCounts[winnerName] || 0) + 1;
+
+      setTimeout(() => {
+        const labels = wheelContainer.querySelectorAll('.wheel-label');
+        labels.forEach(label => label.classList.remove('winner'));
+        if (labels[winningIndex]) {
+          labels[winningIndex].classList.add('winner');
+          winningDisplay.innerHTML = `${translations.result[currentLanguage]} <span class="winner-result">${winnerName}</span> 🎉`;
+        }
+        enableAllButtons();
+      }, spinDuration);
     });
-    statsContent.innerHTML = html;
-    statsModalInstance.show();
-  });
-</script>
+
+    // Reset button event: clear all information and reinitialize an empty form
+    resetBtn.addEventListener('click', () => {
+      disableAllButtons();
+      players = [];
+      currentAngle = 0;
+      spinCount = 0;
+      winCounts = {};
+      playerFormDiv.innerHTML = '';
+      wheelContainer.innerHTML = '';
+      wheelContainer.style.transform = 'rotate(0deg)';
+      winningDisplay.textContent = '';
+      setTimeout(() => {
+        buildDefaultPlayerForm();
+        spinBtn.disabled = true;
+        statsBtn.disabled = true;
+        shareLinkBtn.disabled = true;
+        enableAllButtons();
+      }, 500);
+    });
+
+    // Statistics button event: display statistics modal with a modern card interface
+    statsBtn.addEventListener('click', () => {
+      let stats = players.map(name => ({
+        name: name,
+        wins: winCounts[name] || 0
+      }));
+      stats.sort((a, b) => b.wins - a.wins);
+
+      let html = '<p class="mb-3">' + translations.numberOfSpins[currentLanguage] + ' ' + spinCount + '</p>';
+      stats.forEach((item, index) => {
+        let emoji = '';
+        if (index === 0) emoji = '🥇';
+        else if (index === 1) emoji = '🥈';
+        else if (index === stats.length - 1) emoji = '😢';
+        html += `<div class="card stat-card">
+                   <div class="card-body d-flex justify-content-between align-items-center">
+                     <div>${index + 1}. ${item.name} ${emoji}</div>
+                     <div>${item.wins}</div>
+                   </div>
+                 </div>`;
+      });
+      statsContent.innerHTML = html;
+      statsModalInstance.show();
+    });
+  </script>
 </body>
 </html>
