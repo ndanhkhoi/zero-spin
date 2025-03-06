@@ -82,7 +82,7 @@
       color: #fff;
       white-space: nowrap;
       text-align: center;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       width: 80px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -183,15 +183,10 @@
               </div>
             </div>
             <div class="modal-footer flex-column">
-              <!-- Container for confirm and share buttons -->
-              <div>
-                <button type="button" class="btn btn-success" id="confirmPlayers">
-                  <i class="fa-solid fa-check"></i>
-                </button>
-                <button type="button" class="btn btn-info" id="shareLinkBtn">
-                  <i class="fa-solid fa-share"></i>
-                </button>
-              </div>
+              <!-- Chỉ giữ nút xác nhận trong modal -->
+              <button type="button" class="btn btn-success" id="confirmPlayers">
+                <i class="fa-solid fa-check"></i> <span data-key="confirm">Xác nhận</span>
+              </button>
             </div>
           </div>
         </div>
@@ -209,10 +204,13 @@
       <!-- Display result -->
       <div id="winningDisplay" class="text-center text-primary"></div>
 
-      <!-- Statistics button -->
+      <!-- Statistics and Share Link buttons placed cùng nhau -->
       <div class="text-center mt-3">
         <button id="statsBtn" class="btn btn-info btn-custom">
           <i class="fa-solid fa-chart-bar"></i> <span data-key="showStatistics">Thống kê kết quả</span>
+        </button>
+        <button id="shareLinkBtn" class="btn btn-info btn-custom">
+          <i class="fa-solid fa-share"></i> <span data-key="shareLink">Chia sẻ link</span>
         </button>
       </div>
 
@@ -265,7 +263,9 @@
     showStatistics: { vi: "Thống kê kết quả", en: "Show statistics" },
     statsModalLabel: { vi: "Thống kê kết quả", en: "Statistics" },
     close: { vi: "Đóng", en: "Close" },
-    numberOfSpins: { vi: "Số lần quay:", en: "Number of spins:" }
+    numberOfSpins: { vi: "Số lần quay:", en: "Number of spins:" },
+    confirm: { vi: "Xác nhận", en: "Confirm" },
+    shareLink: { vi: "Chia sẻ", en: "Share" }
   };
 
   // Function to update UI texts according to the selected language with fade effect
@@ -297,10 +297,51 @@
     document.getElementById('modalStatus').innerHTML = '<div class="alert alert-' + type + '" role="alert">' + message + '</div>';
   }
 
-  // Language select event
+  // Language select event – lưu ngôn ngữ đã chọn vào localStorage
   document.getElementById('languageSelect').addEventListener('change', (e) => {
     currentLanguage = e.target.value;
+    localStorage.setItem('language', currentLanguage);
     updateLanguage();
+  });
+
+  // On page load, kiểm tra localStorage để load ngôn ngữ cũ (nếu có)
+  window.addEventListener('load', () => {
+    const storedLang = localStorage.getItem('language');
+    if (storedLang) {
+      currentLanguage = storedLang;
+      document.getElementById('languageSelect').value = currentLanguage;
+    }
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('players')) {
+      const paramPlayers = urlParams.get('players');
+      const playerNames = paramPlayers.split(',').map(name => name.trim()).filter(name => name);
+      if (playerNames.length > 0) {
+        players = playerNames;
+        document.getElementById('playerForm').innerHTML = '';
+        playerNames.forEach(name => document.getElementById('playerForm').appendChild(createPlayerRow(name)));
+        updateDeleteButtons();
+        checkPlayerInputs();
+        createWheel();
+      } else {
+        buildDefaultPlayerForm();
+        document.getElementById('wheel-container').innerHTML = '';
+        spinBtn.disabled = true;
+        statsBtn.disabled = true;
+      }
+    } else {
+      buildDefaultPlayerForm();
+      document.getElementById('wheel-container').innerHTML = '';
+      spinBtn.disabled = true;
+      statsBtn.disabled = true;
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+              .then(reg => console.log('Service Worker registered', reg))
+              .catch(err => console.error('Service Worker registration failed', err));
+    }
+    // Initialize language texts and fade in the card
+    updateLanguage();
+    document.getElementById('appCard').style.opacity = 1;
   });
 
   // Get DOM elements
@@ -375,6 +416,7 @@
     });
     spinBtn.disabled = !allFilled;
     statsBtn.disabled = !allFilled;
+    shareLinkBtn.disabled = !allFilled;
   }
 
   // Initialize default form with 2 empty input fields
@@ -413,34 +455,26 @@
     players.forEach(name => {
       if (winCounts[name] === undefined) winCounts[name] = 0;
     });
+    // Cập nhật URL với tham số players
+    const encodedNames = players.map(name => encodeURIComponent(name)).join(',');
+    const newUrl = `${window.location.origin}${window.location.pathname}?players=${encodedNames}`;
+    window.history.replaceState(null, '', newUrl);
+    
     showModalStatus("", "");
     createWheel();
     spinBtn.disabled = false;
     statsBtn.disabled = false;
+    shareLinkBtn.disabled = false;
     modalInstance.hide();
   });
 
-  // Share Link button event
+  // Share Link button event – copy URL hiện tại vào clipboard
   shareLinkBtn.addEventListener('click', () => {
-    // Clear any previous alert message
-    showModalStatus("", "danger");
-
-    const inputs = document.querySelectorAll('.player-input');
-    let allFilled = true;
-    let playerNamesTemp = [];
-    inputs.forEach(input => {
-      if (input.value.trim() === '') {
-        allFilled = false;
-      } else {
-        playerNamesTemp.push(input.value.trim());
-      }
-    });
-    if (!allFilled) {
+    if (players.length === 0) {
       showModalStatus(translations.pleaseEnterAllPlayerNames[currentLanguage], 'danger');
       return;
     }
-    // Encode each name and join them with a comma
-    const encodedNames = playerNamesTemp.map(name => encodeURIComponent(name)).join(',');
+    const encodedNames = players.map(name => encodeURIComponent(name)).join(',');
     const shareUrl = `${window.location.origin}${window.location.pathname}?players=${encodedNames}`;
     navigator.clipboard.writeText(shareUrl)
             .then(() => {
@@ -529,6 +563,7 @@
       buildDefaultPlayerForm();
       spinBtn.disabled = true;
       statsBtn.disabled = true;
+      shareLinkBtn.disabled = true;
       enableAllButtons();
     }, 500);
   });
@@ -556,42 +591,6 @@
     });
     statsContent.innerHTML = html;
     statsModalInstance.show();
-  });
-
-  // On page load: if 'players' parameter exists, pre-fill input fields with corresponding values and draw the wheel;
-  // if not, initialize an empty form (with 2 fields) and do not create the wheel.
-  window.addEventListener('load', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('players')) {
-      const paramPlayers = urlParams.get('players');
-      const playerNames = paramPlayers.split(',').map(name => name.trim()).filter(name => name);
-      if (playerNames.length > 0) {
-        players = playerNames;
-        playerFormDiv.innerHTML = '';
-        playerNames.forEach(name => playerFormDiv.appendChild(createPlayerRow(name)));
-        updateDeleteButtons();
-        checkPlayerInputs();
-        createWheel();
-      } else {
-        buildDefaultPlayerForm();
-        wheelContainer.innerHTML = '';
-        spinBtn.disabled = true;
-        statsBtn.disabled = true;
-      }
-    } else {
-      buildDefaultPlayerForm();
-      wheelContainer.innerHTML = '';
-      spinBtn.disabled = true;
-      statsBtn.disabled = true;
-    }
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js')
-              .then(reg => console.log('Service Worker registered', reg))
-              .catch(err => console.error('Service Worker registration failed', err));
-    }
-    // Initialize language texts and fade in the card
-    updateLanguage();
-    document.getElementById('appCard').style.opacity = 1;
   });
 </script>
 </body>
