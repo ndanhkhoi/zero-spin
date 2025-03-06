@@ -26,8 +26,8 @@
     /* Container for the wheel with white border & shadow */
     .wheel-wrapper {
       position: relative;
-      width: 300px;
-      height: 300px;
+      width: 400px;
+      height: 400px;
       margin: 0 auto;
     }
     #wheel-container {
@@ -60,8 +60,8 @@
       background-color: white;
       border: none;
       border-radius: 50%;
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -74,15 +74,16 @@
     /* Label for displaying player's name on the wheel */
     .wheel-label {
       position: absolute;
-      left: 50%;
+      left: 40%;
       top: 50%;
+      transform: translate(-50%, -50%);
       transform-origin: center;
       font-weight: bold;
       color: #fff;
       white-space: nowrap;
       text-align: center;
-      font-size: 0.7rem;
-      max-width: 60px;
+      font-size: 0.9rem;
+      width: 80px;
       overflow: hidden;
       text-overflow: ellipsis;
     }
@@ -459,21 +460,21 @@
     for (let i = 0; i < numPlayers; i++) {
       let startAngle = i * segmentAngle;
       let endAngle = (i + 1) * segmentAngle;
-      let color = 'hsl(' + (i * (360 / numPlayers)) + ', 70%, 60%)';
-      gradientStr += color + ' ' + startAngle + 'deg, ' + color + ' ' + endAngle + 'deg';
+      let color = `hsl(${i * (360 / numPlayers)}, 70%, 60%)`;
+      gradientStr += `${color} ${startAngle}deg, ${color} ${endAngle}deg`;
       if (i < numPlayers - 1) gradientStr += ', ';
     }
     gradientStr += ')';
     wheelContainer.style.background = gradientStr;
 
-    const labelRadius = 80;
+    const labelRadius = 140;
     for (let i = 0; i < numPlayers; i++) {
       const label = document.createElement('div');
       label.className = 'wheel-label';
       label.textContent = players[i];
       const midAngle = (i + 0.5) * segmentAngle;
       // Initially display label rotated to position
-      label.style.transform = 'rotate(' + midAngle + 'deg) translate(0, -' + labelRadius + 'px) rotate(' + (-midAngle + 5) + 'deg)';
+      label.style.transform = `rotate(${midAngle}deg) translate(0, -${labelRadius}px) rotate(90deg)`;
       wheelContainer.appendChild(label);
     }
   }
@@ -493,7 +494,7 @@
     const extraSpins = 360 * 5;
     const spinDegrees = extraSpins + randomAngle;
     currentAngle += spinDegrees;
-    wheelContainer.style.transform = 'rotate(' + currentAngle + 'deg)';
+    wheelContainer.style.transform = `rotate(${currentAngle}deg)`;
 
     spinCount++;
     const normalizedAngle = currentAngle % 360;
@@ -507,7 +508,7 @@
       labels.forEach(label => label.classList.remove('winner'));
       if (labels[winningIndex]) {
         labels[winningIndex].classList.add('winner');
-        winningDisplay.innerHTML = translations.result[currentLanguage] + ' <span class="winner-result">' + winnerName + '</span> 🎉';
+        winningDisplay.innerHTML = `${translations.result[currentLanguage]} <span class="winner-result">${winnerName}</span> 🎉`;
       }
       enableAllButtons();
     }, spinDuration);
@@ -546,11 +547,12 @@
       if (index === 0) emoji = '🥇';
       else if (index === 1) emoji = '🥈';
       else if (index === stats.length - 1) emoji = '😢';
-      html += '<div class="card stat-card">';
-      html += '<div class="card-body d-flex justify-content-between align-items-center">';
-      html += '<div>' + (index + 1) + '. ' + item.name + ' ' + emoji + '</div>';
-      html += '<div>' + item.wins + '</div>';
-      html += '</div></div>';
+      html += `<div class="card stat-card">
+           <div class="card-body d-flex justify-content-between align-items-center">
+             <div>${index + 1}. ${item.name} ${emoji}</div>
+             <div>${item.wins}</div>
+           </div>
+         </div>`;
     });
     statsContent.innerHTML = html;
     statsModalInstance.show();
