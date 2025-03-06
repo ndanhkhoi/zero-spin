@@ -277,6 +277,7 @@
       linkCopied: { vi: "Đã copy link vào clipboard!", en: "Link copied to clipboard!" },
       errorCopyingLink: { vi: "Lỗi khi copy link: ", en: "Error copying link: " },
       result: { vi: "Kết quả:", en: "Result:" },
+      spinning: { vi: "Đang quay... 🌀.  ", en: "Spinning... 🌀" },
       showStatistics: { vi: "Thống kê kết quả", en: "Show statistics" },
       statsModalLabel: { vi: "Thống kê kết quả", en: "Statistics" },
       close: { vi: "Đóng", en: "Close" },
@@ -558,9 +559,14 @@
       return (randomUint32[0] / 0xFFFFFFFF) * 360;
     }
 
-    // Spin button event: disable buttons, spin the wheel, then highlight the winner's label (using text-shadow)
+    // Spin button event: disable buttons, disable language select, display "spinning" message, spin the wheel, then display result and re-enable language select
     spinBtn.addEventListener('click', () => {
       if (players.length === 0) return;
+      // Disable language select while spinning
+      document.getElementById('languageSelect').disabled = true;
+      // Display spinning message from translations (multi-language)
+      winningDisplay.innerHTML = translations.spinning[currentLanguage];
+      
       disableAllButtons();
       const randomAngle = getRandomAngle();
       const extraSpins = 360 * 5;
@@ -582,6 +588,8 @@
           labels[winningIndex].classList.add('winner');
           winningDisplay.innerHTML = `${translations.result[currentLanguage]} <span class="winner-result">${winnerName}</span> 🎉`;
         }
+        // Re-enable language select after spinning is finished
+        document.getElementById('languageSelect').disabled = false;
         enableAllButtons();
       }, spinDuration);
     });
