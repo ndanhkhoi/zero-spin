@@ -1,79 +1,101 @@
 # Zero Spin
 
-Zero Spin is a web application that lets you spin a wheel to randomly select a winner from a list of players. This project supports player list input through a modal, auto-generates input fields and the wheel when URL parameters are provided, allows you to share a link with an encoded list of players, and displays the spinning results along with win statistics.
+Zero Spin is a modern web application that lets you spin a wheel to randomly select a winner from a list of players. The project has evolved to include multi-language support, persistent settings via URL parameters and localStorage, and enhanced UI/UX features for a more engaging experience.
 
 ## Features
 
-- **Input Player List**: Users can enter player names through a modal interface.
-- **URL Parameters**: If the URL includes a parameter (e.g., `?players=Player1,Player2,Player3`), the input fields will be pre-filled with those values, and the wheel will be generated immediately.
-- **Random Wheel Spin**: Uses the Web Crypto API to generate a random number and spin the wheel with a smooth animation.
-- **Display Results & Statistics**: Highlights the winning player on the wheel and displays the result along with statistics on each player's win count.
-- **Share Link**: Generates a shareable link that uses the current host (e.g., `https://[current-domain]/?players=...`) where player names are URL encoded and concatenated with commas. The link is automatically copied to the clipboard, and a success message is displayed.
-- **PWA Support**: Includes a Service Worker (`sw.js`) for Progressive Web App functionality if needed.
+- **Dynamic Player List Input**
+   - Enter player names using a modal interface that dynamically adds or removes input fields.
+   - The modal starts with two empty fields by default.
+   - If the URL contains a `players` parameter (e.g., `?players=Alice,Bob,Charlie`), the fields will be pre-filled and the wheel will be generated immediately.
+   - The player list is saved in both localStorage and URL parameters, ensuring persistence between sessions and easy sharing.
+
+- **Multi-Language Support**
+   - Supports at least two languages (Vietnamese and English).
+   - The language selection dropdown is synced with localStorage and the URL parameter (`lang`), so the preferred language persists across sessions.
+   - During a wheel spin, the language dropdown is temporarily disabled to prevent mid-spin language changes.
+   - All status messages (including the “spinning” message) are displayed in the selected language with context-appropriate emojis.
+
+- **Random Wheel Spin**
+   - Uses the Web Crypto API to generate a random angle for each spin.
+
+- **Shareable Link Generation**
+   - A share button automatically generates a link with the current player list encoded in the URL (e.g., `https://your-domain/?players=Alice,Bob,Charlie`).
+   - The link is automatically copied to the clipboard using the Clipboard API, and a success notification is shown.
+   - The share button text is simplified to “Share” for clarity.
+
+- **Win Statistics**
+   - After each spin, the win count for each player is updated.
+   - A statistics modal presents each player’s win count in a modern card layout.
+   - The modal is accessible via a “View Statistics” button.
+
+- **Custom Alert Notifications**
+   - All alerts (e.g., link-copy success, input errors) appear in a fixed high-z-index container, ensuring they are visible above modals.
+   - Alerts auto-dismiss after a few seconds with a smooth fade-out.
+
+- **Reset Functionality**
+   - A reset button clears all inputs, resets the wheel, and resets the win statistics.
+
+- **Progressive Web App (PWA) Ready**
+   - The application includes a Service Worker (`sw.js`) and a manifest file (`manifest.json`) to enable PWA functionality if deployed on a compatible web server.
+
+- **Code Organization & Refactoring**
+   - The code is modularized by extracting common logic into reusable functions (e.g., `loadLanguage()`, `loadPlayers()`, etc.) for better maintainability.
+   - URL parameters and localStorage are used in tandem to persist both language settings and player lists.
 
 ## Usage
 
 1. **Launch the Application**  
-   Open the `index.html` file in a modern web browser that supports HTML5, CSS3, and JavaScript.
+   Open `index.html` in a modern web browser that supports HTML5, CSS3, and JavaScript (e.g., Chrome, Firefox, or Edge).
 
-2. **Input the Player List**  
+2. **Input the Player List**
    - Click the **"Enter Player List"** button to open the modal.
-   - If the URL contains the `players` parameter (e.g., `https://[current-domain]/?players=Player1,Player2,Player3`), the player list will be pre-filled and the wheel will be generated automatically.
-   - Otherwise, the modal will display two empty input fields by default.
+   - If the URL contains the `players` parameter (e.g., `https://your-domain/?players=Alice,Bob,Charlie`), the player list is pre-filled and the wheel is generated automatically.
+   - Otherwise, enter player names into the two (or more) input fields.
 
-3. **Confirm the List**  
-   - Click the **"Confirm"** button to validate and save the player list. An error message will display if any input is empty.
-   - Upon successful confirmation, the wheel is generated based on the provided player names.
+3. **Confirm the List**
+   - Click the **"Confirm"** button in the modal. If any input is empty, an error notification appears.
+   - On confirmation, the player list is saved to localStorage and the URL is updated accordingly. The wheel is generated based on the provided names.
 
-4. **Share the Link**  
-   - Click the **"Share Link"** button (located next to the Confirm button) to generate a link with the URL encoded player names.
-   - The generated link will follow the format:  
-     `https://[current-domain]/?players=...`  
-     where `[current-domain]` represents the current host where the app is running.
-   - This link is copied to your clipboard using the Clipboard API, and a success message ("Link copied to clipboard!") is displayed in green.
-   - The validation message is cleared each time the modal is reopened.
+4. **Share the Link**
+   - Click the **"Share"** button (located next to the “View Statistics” button) to generate a shareable link.
+   - The generated link encodes the current player list (e.g., `https://your-domain/?players=Alice,Bob,Charlie`) and is automatically copied to your clipboard. A success message confirms the copy.
 
-5. **Spin the Wheel & View Results**  
-   - Click the **"Spin"** button to spin the wheel randomly.
-   - After the spin, the wheel highlights the winning player's name and updates the statistics accordingly.
+5. **Spin the Wheel & View Results**
+   - Click the **"Spin"** button to spin the wheel.
+   - After the spin, the winning player's name is highlighted on the wheel and the result is displayed below with an animated highlight.
 
-6. **View Statistics**  
-   - Click the **"View Statistics"** button to display a modal with each player's win count presented in a modern card layout.
+6. **View Statistics**
+   - Click the **"View Statistics"** button to open a modal showing each player’s win count in a card-based layout.
 
-7. **Reset**  
-   - Click the **"Reset"** button to clear all input fields and reset the wheel and statistics to their initial state.
-
-## Project Structure
-
-- **index.html**: The main HTML file that contains the user interface and JavaScript logic.
-- **manifest.json**: Configuration file for PWA functionality (if applicable).
-- **sw.js**: Service Worker file that enables PWA support (if applicable).
-- **CDN Resources**:  
-  - [Bootstrap 5](https://getbootstrap.com/) for responsive design.
-  - [FontAwesome](https://fontawesome.com/) for icons.
-
-## Technologies Used
-
-- **HTML5 & CSS3**: For building the user interface.
-- **JavaScript**: For event handling, spinning the wheel, displaying results, and generating the shareable link.
-- **Web Crypto API**: To generate a random number for the wheel spin.
-- **Clipboard API**: To copy the generated link to the clipboard.
-- **Bootstrap 5**: For creating a responsive and modern UI.
-- **Service Worker**: For enabling PWA functionality (if deployed as a PWA).
+7. **Reset the Application**
+   - Click the **"Reset"** button to clear all player data, reset the wheel, and clear the statistics.
 
 ## Installation & Deployment
 
-1. **Clone the Repository**  
+1. **Clone the Repository**
    ```bash
    git clone https://github.com/ndanhkhoi/zero-spin.git
    ```
+
 2. **Open `index.html`**  
    You can open the file directly in a web browser or deploy it on a web server.
+
 3. **URL Parameters**  
    To test the auto-fill feature, visit a URL like:  
-   `https://[current-domain]/?players=Player1,Player2,Player3`
+   `https://your-domain/?players=Alice,Bob,Charlie&lang=en`
+
 4. **PWA Setup (Optional)**  
-   If you want to deploy the application as a Progressive Web App, ensure that `manifest.json` and `sw.js` are correctly configured.
+   Ensure that `manifest.json` and `sw.js` are correctly configured if you plan to deploy the application as a Progressive Web App.
+
+## Technologies Used
+
+- **HTML5 & CSS3** – For building the responsive and modern user interface.
+- **JavaScript (ES6+)** – For event handling, data persistence, and animations.
+- **Web Crypto API** – To generate cryptographically secure random numbers for spinning.
+- **Clipboard API** – To copy shareable links to the clipboard.
+- **Bootstrap 5** – For responsive design and prebuilt UI components.
+- **Service Worker** – For enabling PWA functionality (if needed).
 
 ## License
 
@@ -82,3 +104,4 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 Happy spinning and good luck!
+
